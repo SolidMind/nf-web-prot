@@ -1,0 +1,9 @@
+[package]
+name = "nf-web-prot"
+version = "0.1.0"
+edition = "2024"
+authors = ["yatoneco"]
+
+
+[dependencies]
+zerocopy = { version = "0.8.30", features = ["derive"] } // BSD-2-Clause OR Apache-2.0 OR MIT
