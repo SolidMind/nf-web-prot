@@ -25,6 +25,14 @@ use core::ops::{BitAnd, BitOr};
 use std::fmt::{self, Debug};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 pub struct PacketProtocol;
+
+#[repr(u8)]
+pub enum PacketType {
+    Request,
+    Response,
+    Notification,
+}
+
 /// StatusFlagsのorはCatchMoveとSilenceにTranseEdge、TranseDiff、TranseCon、OrderPass、OrderErrorの何れかが可能。
 /// TODO: ロジックとしてorを制限する。
 /// TODO CPUに優しくするために4バイトや8バイト区切りでアクセスに対応。
@@ -49,6 +57,7 @@ pub struct MessageHeader {
     // 2バイト/1バイト境界 (Offset 52)
     pub version: u8,    // 1 bytes
     pub mask_index: u8, // 1 byte
+    //pub packet_type: PacketType, // 1 byte
 
     // パディング (Offset 54)
     pub _reserved: [u8; 10], // 10 bytes
@@ -67,7 +76,7 @@ impl MessageHeader {
         body_size: u64,
     ) -> Self {
         return Self {
-            version: 1,
+            version: 0,
             project_id: project_id,
             device_id: device_id,
             time: time,
