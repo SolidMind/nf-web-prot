@@ -45,7 +45,7 @@ impl PacketProtocol {
         let header = zerocopy::Ref::<&[u8], MessageHeader>::into_ref(header_ref);
 
         // ボディサイズの整合性チェック
-        if header.body_size != body_bytes.len() as u64 {
+        if header.body_size != body_bytes.len() as u32 {
             return Err("Body size mismatch");
         }
 

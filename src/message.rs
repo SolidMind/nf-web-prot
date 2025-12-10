@@ -44,39 +44,38 @@ pub struct MessageHeader {
     pub project_id: u128, // 16 bytes
 
     // 8バイト境界 (Offset 16)
-    pub body_size: u64, // 8 bytes
-    pub time: u64,      // 8 bytes
+    pub time: i64, // 8 bytes
 
-    // 4バイト境界 (Offset 32)
-    pub state: StatusFlags,    // 4 bytes
-    pub interval_ms: u32,      // 4 bytes
-    pub mask_white_ratio: f32, // 4 bytes
+    // 4バイト境界 (Offset 24)
+    pub interval_ms: u32,      // 4 bytes //TODO bodyへ
+    pub mask_white_ratio: f32, // 4 bytes //TODO bodyへ
     pub device_id: u32,        // 4 bytes
     pub codec: [u8; 4],        // 4 bytes
+    pub body_size: u32,        // 4 bytes
 
-    // 2バイト/1バイト境界 (Offset 52)
-    pub version: u8,    // 1 bytes
-    pub mask_index: u8, // 1 byte
-    //pub packet_type: PacketType, // 1 byte
+    // 2バイト/1バイト境界 (Offset 44)
+    pub state: StatusFlags, // 2 bytes
+    pub version: u8,        // 1 bytes
+    pub mask_index: u8,     // 1 byte //TODO bodyへ
 
-    // パディング (Offset 54)
-    pub _reserved: [u8; 10], // 10 bytes
+    // パディング (Offset 48)
+    pub _reserved: [u8; 0], // 0 bytes
 }
 
 impl MessageHeader {
     pub fn new(
         project_id: u128,
         device_id: u32,
-        time: u64,
+        time: i64,
         state: StatusFlags,
         mask_index: u8,
         mask_white_ratio: f32,
         interval_ms: u32,
         codec: [u8; 4],
-        body_size: u64,
+        body_size: u32,
     ) -> Self {
         return Self {
-            version: 0,
+            version: crate::CURRENT_PROTOCOL_VERSION,
             project_id: project_id,
             device_id: device_id,
             time: time,
@@ -86,14 +85,14 @@ impl MessageHeader {
             codec: codec,
             mask_index: mask_index,
             body_size: body_size,
-            _reserved: [0; 10],
+            _reserved: [0; 0],
         };
     }
 }
 
 #[repr(transparent)]
 #[derive(Clone, Copy, PartialEq, Eq, FromBytes, IntoBytes, Immutable)]
-pub struct StatusFlags(pub u32);
+pub struct StatusFlags(pub u16);
 
 impl StatusFlags {
     pub const CATCH_MOVE: Self = Self(1 << 0);
@@ -111,6 +110,8 @@ impl StatusFlags {
     pub const TRY_RESTART: Self = Self(1 << 11);
 
     pub const UNWORK_CAMERA: Self = Self(1 << 12);
+    pub const DISCONNECT: Self = Self(1 << 13);
+    pub const CONNECT: Self = Self(1 << 14);
 }
 impl BitOr for StatusFlags {
     type Output = Self;

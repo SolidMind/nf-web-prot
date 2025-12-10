@@ -31,13 +31,16 @@ pub const CURRENT_PROTOCOL_VERSION: u8 = 0;
 
 #[cfg(test)]
 mod tests {
-    //cargo test  -- --nocapture
-    use crate::{CURRENT_PROTOCOL_VERSION, message::*};
+    use std::time::Instant;
+
+    //
+    use crate::message::*;
 
     #[test]
     fn test_serialize_deserialize() {
         // 1. 送信データ作成
         let original_body = b"Hello, Protocol!";
+
         let header = MessageHeader::new(
             123456789,                                          // project_id
             999,                                                // device_id
@@ -47,7 +50,7 @@ mod tests {
             0.5,                                                // mask_white_ratio
             1000,                                               // interval_ms:
             *b"jpeg",                                           // codec
-            original_body.len() as u64,                         // body_size
+            original_body.len() as u32,                         // body_size
         );
 
         let packet = PacketProtocol::serialize(&header, original_body);
@@ -107,6 +110,8 @@ mod tests {
             ("TRANSE_CON", StatusFlags::TRANSE_CON),
             ("TRY_RESTART", StatusFlags::TRY_RESTART),
             ("UNWORK_CAMERA", StatusFlags::UNWORK_CAMERA),
+            ("DISCONNECT", StatusFlags::DISCONNECT),
+            ("CONNECT", StatusFlags::CONNECT),
         ];
 
         for (def_name, def_val) in defined_flags {
@@ -119,21 +124,5 @@ mod tests {
                 }
             }
         }
-    }
-
-    #[test]
-    fn check_current_protocol_version() {
-        let header = MessageHeader::new(
-            123456789,                                          // project_id
-            999,                                                // device_id
-            0,                                                  // time
-            StatusFlags::CATCH_MOVE | StatusFlags::TRANSE_EDGE, // state
-            2,                                                  // mask_index
-            0.5,                                                // mask_white_ratio
-            1000,                                               // interval_ms:
-            *b"jpeg",                                           // codec
-            0,                                                  // body_size
-        );
-        assert_eq!(CURRENT_PROTOCOL_VERSION, header.version);
     }
 }
