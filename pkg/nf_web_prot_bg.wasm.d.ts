@@ -1,0 +1,33 @@
+/* tslint:disable */
+/* eslint-disable */
+export const memory: WebAssembly.Memory;
+export const wasm_serialize_packet: (a: bigint, b: bigint, c: bigint, d: bigint, e: bigint, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number) => [number, number, number, number];
+export const __wbg_wasmdecodedpacket_free: (a: number, b: number) => void;
+export const __wbg_get_wasmdecodedpacket_project_id_hi: (a: number) => bigint;
+export const __wbg_set_wasmdecodedpacket_project_id_hi: (a: number, b: bigint) => void;
+export const __wbg_get_wasmdecodedpacket_project_id_lo: (a: number) => bigint;
+export const __wbg_set_wasmdecodedpacket_project_id_lo: (a: number, b: bigint) => void;
+export const __wbg_get_wasmdecodedpacket_device_id_hi: (a: number) => bigint;
+export const __wbg_set_wasmdecodedpacket_device_id_hi: (a: number, b: bigint) => void;
+export const __wbg_get_wasmdecodedpacket_device_id_lo: (a: number) => bigint;
+export const __wbg_set_wasmdecodedpacket_device_id_lo: (a: number, b: bigint) => void;
+export const __wbg_get_wasmdecodedpacket_time: (a: number) => bigint;
+export const __wbg_set_wasmdecodedpacket_time: (a: number, b: bigint) => void;
+export const __wbg_get_wasmdecodedpacket_interval_ms: (a: number) => number;
+export const __wbg_set_wasmdecodedpacket_interval_ms: (a: number, b: number) => void;
+export const __wbg_get_wasmdecodedpacket_mask_white_ratio: (a: number) => number;
+export const __wbg_set_wasmdecodedpacket_mask_white_ratio: (a: number, b: number) => void;
+export const __wbg_get_wasmdecodedpacket_state_flag: (a: number) => number;
+export const __wbg_set_wasmdecodedpacket_state_flag: (a: number, b: number) => void;
+export const __wbg_get_wasmdecodedpacket_mask_index: (a: number) => number;
+export const __wbg_set_wasmdecodedpacket_mask_index: (a: number, b: number) => void;
+export const __wbg_get_wasmdecodedpacket_body_size: (a: number) => number;
+export const __wbg_set_wasmdecodedpacket_body_size: (a: number, b: number) => void;
+export const wasmdecodedpacket_codec: (a: number) => [number, number];
+export const wasmdecodedpacket_body: (a: number) => [number, number];
+export const wasm_deserialize_packet: (a: number, b: number) => [number, number, number];
+export const __wbindgen_externrefs: WebAssembly.Table;
+export const __wbindgen_malloc: (a: number, b: number) => number;
+export const __externref_table_dealloc: (a: number) => void;
+export const __wbindgen_free: (a: number, b: number, c: number) => void;
+export const __wbindgen_start: () => void;
