@@ -1,12 +1,13 @@
+// src/lib.rs
 use wasm_bindgen::prelude::*;
+use uuid::Uuid;
 use crate::message::{MessageHeader, PacketProtocol, StatusFlags};
 
+// --- シリアライズ ---
 #[wasm_bindgen]
 pub fn wasm_serialize_packet(
-    project_id_hi: u64,
-    project_id_lo: u64,
-    device_id_hi: u64,
-    device_id_ho:u64,
+    project_id_str: &str,
+    device_id_str: &str, // <- 追加 (文字列として受け取る)
     time: i64,
     interval_ms: u32,
     mask_white_ratio: f32,
@@ -19,17 +20,20 @@ pub fn wasm_serialize_packet(
     if codec_array.len() != 4 {
         return Err(JsValue::from_str("Codec must be exactly 4 bytes"));
     }
-
     let mut codec = [0u8; 4];
     codec.copy_from_slice(&codec_array[0..4]);
 
-    // JSから渡された上位64bitと下位64bitを結合してu128にする
-    let project_id = ((project_id_hi as u128) << 64) | (project_id_lo as u128);
-    let device_id = ((device_id_hi as u128) << 64) | (device_id_ho as u128);
+    // Project ID のパース
+    let project_uuid = Uuid::parse_str(project_id_str)
+        .map_err(|e| JsValue::from_str(&format!("Invalid Project UUID: {}", e)))?;
+
+    // Device ID のパース (追加)
+    let device_uuid = Uuid::parse_str(device_id_str)
+        .map_err(|e| JsValue::from_str(&format!("Invalid Device UUID: {}", e)))?;
 
     let header = MessageHeader::new(
-        project_id,
-        device_id,
+        project_uuid.into_bytes(),
+        device_uuid.into_bytes(), // [u8; 16] に変換して渡す
         time,
         StatusFlags(state_flag),
         mask_index,
@@ -42,13 +46,11 @@ pub fn wasm_serialize_packet(
     Ok(PacketProtocol::serialize(&header, body))
 }
 
-// JS/TS側で受け取るための構造体
+// --- デシリアライズ ---
 #[wasm_bindgen(getter_with_clone)]
 pub struct WasmDecodedPacket {
-    pub project_id_hi: u64,
-    pub project_id_lo: u64,
-    pub device_id_hi: u64,
-    pub device_id_lo: u64,
+    pub project_id: String,
+    pub device_id: String, // <- String に変更
     pub time: i64,
     pub interval_ms: u32,
     pub mask_white_ratio: f32,
@@ -65,30 +67,24 @@ impl WasmDecodedPacket {
     pub fn codec(&self) -> Vec<u8> {
         self.codec_internal.to_vec()
     }
-
     #[wasm_bindgen(getter)]
     pub fn body(&self) -> Vec<u8> {
         self.body_internal.clone()
     }
 }
 
-// デシリアライズ関数
 #[wasm_bindgen]
 pub fn wasm_deserialize_packet(bytes: &[u8]) -> Result<WasmDecodedPacket, JsValue> {
     let (header, body) = PacketProtocol::deserialize(bytes)
         .map_err(|e| JsValue::from_str(e))?;
 
-    let project_id_hi = (header.project_id >> 64) as u64;
-    let project_id_lo = header.project_id as u64;
-
-    let device_id_hi = (header.device_id >> 64) as u64;
-    let device_id_lo = header.device_id as u64;
+    // 16バイトの配列からUUID文字列を復元
+    let project_uuid_str = Uuid::from_bytes(header.project_id).to_string();
+    let device_uuid_str = Uuid::from_bytes(header.device_id).to_string(); // 追加
 
     Ok(WasmDecodedPacket {
-        project_id_hi,
-        project_id_lo,
-        device_id_hi,
-        device_id_lo,
+        project_id: project_uuid_str,
+        device_id: device_uuid_str, // 文字列をセット
         time: header.time,
         interval_ms: header.interval_ms,
         mask_white_ratio: header.mask_white_ratio,
