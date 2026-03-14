@@ -6,13 +6,11 @@ export class WasmDecodedPacket {
     free(): void;
     [Symbol.dispose](): void;
     body_size: number;
-    device_id_hi: bigint;
-    device_id_lo: bigint;
+    device_id: string;
     interval_ms: number;
     mask_index: number;
     mask_white_ratio: number;
-    project_id_hi: bigint;
-    project_id_lo: bigint;
+    project_id: string;
     state_flag: number;
     time: bigint;
     readonly body: Uint8Array;
@@ -21,22 +19,18 @@ export class WasmDecodedPacket {
 
 export function wasm_deserialize_packet(bytes: Uint8Array): WasmDecodedPacket;
 
-export function wasm_serialize_packet(project_id_hi: bigint, project_id_lo: bigint, device_id_hi: bigint, device_id_ho: bigint, time: bigint, interval_ms: number, mask_white_ratio: number, codec_array: Uint8Array, body_size: number, state_flag: number, mask_index: number, body: Uint8Array): Uint8Array;
+export function wasm_serialize_packet(project_id_str: string, device_id_str: string, time: bigint, interval_ms: number, mask_white_ratio: number, codec_array: Uint8Array, body_size: number, state_flag: number, mask_index: number, body: Uint8Array): Uint8Array;
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
-    readonly wasm_serialize_packet: (a: bigint, b: bigint, c: bigint, d: bigint, e: bigint, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number) => [number, number, number, number];
+    readonly wasm_serialize_packet: (a: number, b: number, c: number, d: number, e: bigint, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number) => [number, number, number, number];
     readonly __wbg_wasmdecodedpacket_free: (a: number, b: number) => void;
-    readonly __wbg_get_wasmdecodedpacket_project_id_hi: (a: number) => bigint;
-    readonly __wbg_set_wasmdecodedpacket_project_id_hi: (a: number, b: bigint) => void;
-    readonly __wbg_get_wasmdecodedpacket_project_id_lo: (a: number) => bigint;
-    readonly __wbg_set_wasmdecodedpacket_project_id_lo: (a: number, b: bigint) => void;
-    readonly __wbg_get_wasmdecodedpacket_device_id_hi: (a: number) => bigint;
-    readonly __wbg_set_wasmdecodedpacket_device_id_hi: (a: number, b: bigint) => void;
-    readonly __wbg_get_wasmdecodedpacket_device_id_lo: (a: number) => bigint;
-    readonly __wbg_set_wasmdecodedpacket_device_id_lo: (a: number, b: bigint) => void;
+    readonly __wbg_get_wasmdecodedpacket_project_id: (a: number) => [number, number];
+    readonly __wbg_set_wasmdecodedpacket_project_id: (a: number, b: number, c: number) => void;
+    readonly __wbg_get_wasmdecodedpacket_device_id: (a: number) => [number, number];
+    readonly __wbg_set_wasmdecodedpacket_device_id: (a: number, b: number, c: number) => void;
     readonly __wbg_get_wasmdecodedpacket_time: (a: number) => bigint;
     readonly __wbg_set_wasmdecodedpacket_time: (a: number, b: bigint) => void;
     readonly __wbg_get_wasmdecodedpacket_interval_ms: (a: number) => number;
@@ -53,9 +47,10 @@ export interface InitOutput {
     readonly wasmdecodedpacket_body: (a: number) => [number, number];
     readonly wasm_deserialize_packet: (a: number, b: number) => [number, number, number];
     readonly __wbindgen_externrefs: WebAssembly.Table;
-    readonly __wbindgen_malloc: (a: number, b: number) => number;
-    readonly __externref_table_dealloc: (a: number) => void;
     readonly __wbindgen_free: (a: number, b: number, c: number) => void;
+    readonly __wbindgen_malloc: (a: number, b: number) => number;
+    readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
+    readonly __externref_table_dealloc: (a: number) => void;
     readonly __wbindgen_start: () => void;
 }
 

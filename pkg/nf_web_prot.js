@@ -26,18 +26,19 @@ export class WasmDecodedPacket {
         return ret >>> 0;
     }
     /**
-     * @returns {bigint}
+     * @returns {string}
      */
-    get device_id_hi() {
-        const ret = wasm.__wbg_get_wasmdecodedpacket_device_id_hi(this.__wbg_ptr);
-        return BigInt.asUintN(64, ret);
-    }
-    /**
-     * @returns {bigint}
-     */
-    get device_id_lo() {
-        const ret = wasm.__wbg_get_wasmdecodedpacket_device_id_lo(this.__wbg_ptr);
-        return BigInt.asUintN(64, ret);
+    get device_id() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.__wbg_get_wasmdecodedpacket_device_id(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
     }
     /**
      * @returns {number}
@@ -61,18 +62,19 @@ export class WasmDecodedPacket {
         return ret;
     }
     /**
-     * @returns {bigint}
+     * @returns {string}
      */
-    get project_id_hi() {
-        const ret = wasm.__wbg_get_wasmdecodedpacket_project_id_hi(this.__wbg_ptr);
-        return BigInt.asUintN(64, ret);
-    }
-    /**
-     * @returns {bigint}
-     */
-    get project_id_lo() {
-        const ret = wasm.__wbg_get_wasmdecodedpacket_project_id_lo(this.__wbg_ptr);
-        return BigInt.asUintN(64, ret);
+    get project_id() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.__wbg_get_wasmdecodedpacket_project_id(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
     }
     /**
      * @returns {number}
@@ -95,16 +97,12 @@ export class WasmDecodedPacket {
         wasm.__wbg_set_wasmdecodedpacket_body_size(this.__wbg_ptr, arg0);
     }
     /**
-     * @param {bigint} arg0
+     * @param {string} arg0
      */
-    set device_id_hi(arg0) {
-        wasm.__wbg_set_wasmdecodedpacket_device_id_hi(this.__wbg_ptr, arg0);
-    }
-    /**
-     * @param {bigint} arg0
-     */
-    set device_id_lo(arg0) {
-        wasm.__wbg_set_wasmdecodedpacket_device_id_lo(this.__wbg_ptr, arg0);
+    set device_id(arg0) {
+        const ptr0 = passStringToWasm0(arg0, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.__wbg_set_wasmdecodedpacket_device_id(this.__wbg_ptr, ptr0, len0);
     }
     /**
      * @param {number} arg0
@@ -125,16 +123,12 @@ export class WasmDecodedPacket {
         wasm.__wbg_set_wasmdecodedpacket_mask_white_ratio(this.__wbg_ptr, arg0);
     }
     /**
-     * @param {bigint} arg0
+     * @param {string} arg0
      */
-    set project_id_hi(arg0) {
-        wasm.__wbg_set_wasmdecodedpacket_project_id_hi(this.__wbg_ptr, arg0);
-    }
-    /**
-     * @param {bigint} arg0
-     */
-    set project_id_lo(arg0) {
-        wasm.__wbg_set_wasmdecodedpacket_project_id_lo(this.__wbg_ptr, arg0);
+    set project_id(arg0) {
+        const ptr0 = passStringToWasm0(arg0, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.__wbg_set_wasmdecodedpacket_project_id(this.__wbg_ptr, ptr0, len0);
     }
     /**
      * @param {number} arg0
@@ -184,10 +178,8 @@ export function wasm_deserialize_packet(bytes) {
 }
 
 /**
- * @param {bigint} project_id_hi
- * @param {bigint} project_id_lo
- * @param {bigint} device_id_hi
- * @param {bigint} device_id_ho
+ * @param {string} project_id_str
+ * @param {string} device_id_str
  * @param {bigint} time
  * @param {number} interval_ms
  * @param {number} mask_white_ratio
@@ -198,18 +190,22 @@ export function wasm_deserialize_packet(bytes) {
  * @param {Uint8Array} body
  * @returns {Uint8Array}
  */
-export function wasm_serialize_packet(project_id_hi, project_id_lo, device_id_hi, device_id_ho, time, interval_ms, mask_white_ratio, codec_array, body_size, state_flag, mask_index, body) {
-    const ptr0 = passArray8ToWasm0(codec_array, wasm.__wbindgen_malloc);
+export function wasm_serialize_packet(project_id_str, device_id_str, time, interval_ms, mask_white_ratio, codec_array, body_size, state_flag, mask_index, body) {
+    const ptr0 = passStringToWasm0(project_id_str, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
-    const ptr1 = passArray8ToWasm0(body, wasm.__wbindgen_malloc);
+    const ptr1 = passStringToWasm0(device_id_str, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len1 = WASM_VECTOR_LEN;
-    const ret = wasm.wasm_serialize_packet(project_id_hi, project_id_lo, device_id_hi, device_id_ho, time, interval_ms, mask_white_ratio, ptr0, len0, body_size, state_flag, mask_index, ptr1, len1);
+    const ptr2 = passArray8ToWasm0(codec_array, wasm.__wbindgen_malloc);
+    const len2 = WASM_VECTOR_LEN;
+    const ptr3 = passArray8ToWasm0(body, wasm.__wbindgen_malloc);
+    const len3 = WASM_VECTOR_LEN;
+    const ret = wasm.wasm_serialize_packet(ptr0, len0, ptr1, len1, time, interval_ms, mask_white_ratio, ptr2, len2, body_size, state_flag, mask_index, ptr3, len3);
     if (ret[3]) {
         throw takeFromExternrefTable0(ret[2]);
     }
-    var v3 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
+    var v5 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
     wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
-    return v3;
+    return v5;
 }
 
 function __wbg_get_imports() {
@@ -268,6 +264,43 @@ function passArray8ToWasm0(arg, malloc) {
     return ptr;
 }
 
+function passStringToWasm0(arg, malloc, realloc) {
+    if (realloc === undefined) {
+        const buf = cachedTextEncoder.encode(arg);
+        const ptr = malloc(buf.length, 1) >>> 0;
+        getUint8ArrayMemory0().subarray(ptr, ptr + buf.length).set(buf);
+        WASM_VECTOR_LEN = buf.length;
+        return ptr;
+    }
+
+    let len = arg.length;
+    let ptr = malloc(len, 1) >>> 0;
+
+    const mem = getUint8ArrayMemory0();
+
+    let offset = 0;
+
+    for (; offset < len; offset++) {
+        const code = arg.charCodeAt(offset);
+        if (code > 0x7F) break;
+        mem[ptr + offset] = code;
+    }
+    if (offset !== len) {
+        if (offset !== 0) {
+            arg = arg.slice(offset);
+        }
+        ptr = realloc(ptr, len, len = offset + arg.length * 3, 1) >>> 0;
+        const view = getUint8ArrayMemory0().subarray(ptr + offset, ptr + len);
+        const ret = cachedTextEncoder.encodeInto(arg, view);
+
+        offset += ret.written;
+        ptr = realloc(ptr, len, offset, 1) >>> 0;
+    }
+
+    WASM_VECTOR_LEN = offset;
+    return ptr;
+}
+
 function takeFromExternrefTable0(idx) {
     const value = wasm.__wbindgen_externrefs.get(idx);
     wasm.__externref_table_dealloc(idx);
@@ -286,6 +319,19 @@ function decodeText(ptr, len) {
         numBytesDecoded = len;
     }
     return cachedTextDecoder.decode(getUint8ArrayMemory0().subarray(ptr, ptr + len));
+}
+
+const cachedTextEncoder = new TextEncoder();
+
+if (!('encodeInto' in cachedTextEncoder)) {
+    cachedTextEncoder.encodeInto = function (arg, view) {
+        const buf = cachedTextEncoder.encode(arg);
+        view.set(buf);
+        return {
+            read: arg.length,
+            written: buf.length
+        };
+    };
 }
 
 let WASM_VECTOR_LEN = 0;
