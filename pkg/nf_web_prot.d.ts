@@ -19,6 +19,8 @@ export class WasmDecodedPacket {
 
 export function wasm_deserialize_packet(bytes: Uint8Array): WasmDecodedPacket;
 
+export function wasm_deserialize_to_json(bytes: Uint8Array): any;
+
 export function wasm_serialize_packet(project_id_str: string, device_id_str: string, time: bigint, interval_ms: number, mask_white_ratio: number, codec_array: Uint8Array, body_size: number, state_flag: number, mask_index: number, body: Uint8Array): Uint8Array;
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
@@ -46,6 +48,7 @@ export interface InitOutput {
     readonly wasmdecodedpacket_codec: (a: number) => [number, number];
     readonly wasmdecodedpacket_body: (a: number) => [number, number];
     readonly wasm_deserialize_packet: (a: number, b: number) => [number, number, number];
+    readonly wasm_deserialize_to_json: (a: number, b: number) => [number, number, number];
     readonly __wbindgen_externrefs: WebAssembly.Table;
     readonly __wbindgen_free: (a: number, b: number, c: number) => void;
     readonly __wbindgen_malloc: (a: number, b: number) => number;

@@ -22,6 +22,7 @@ export const __wbg_set_wasmdecodedpacket_body_size: (a: number, b: number) => vo
 export const wasmdecodedpacket_codec: (a: number) => [number, number];
 export const wasmdecodedpacket_body: (a: number) => [number, number];
 export const wasm_deserialize_packet: (a: number, b: number) => [number, number, number];
+export const wasm_deserialize_to_json: (a: number, b: number) => [number, number, number];
 export const __wbindgen_externrefs: WebAssembly.Table;
 export const __wbindgen_free: (a: number, b: number, c: number) => void;
 export const __wbindgen_malloc: (a: number, b: number) => number;

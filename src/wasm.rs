@@ -2,12 +2,12 @@
 use wasm_bindgen::prelude::*;
 use uuid::Uuid;
 use crate::message::{MessageHeader, PacketProtocol, StatusFlags};
-
+use serde::Serialize;
 // --- シリアライズ ---
 #[wasm_bindgen]
 pub fn wasm_serialize_packet(
     project_id_str: &str,
-    device_id_str: &str, // <- 追加 (文字列として受け取る)
+    device_id_str: &str,
     time: i64,
     interval_ms: u32,
     mask_white_ratio: f32,
@@ -33,7 +33,7 @@ pub fn wasm_serialize_packet(
 
     let header = MessageHeader::new(
         project_uuid.into_bytes(),
-        device_uuid.into_bytes(), // [u8; 16] に変換して渡す
+        device_uuid.into_bytes(),
         time,
         StatusFlags(state_flag),
         mask_index,
@@ -50,7 +50,7 @@ pub fn wasm_serialize_packet(
 #[wasm_bindgen(getter_with_clone)]
 pub struct WasmDecodedPacket {
     pub project_id: String,
-    pub device_id: String, // <- String に変更
+    pub device_id: String,
     pub time: i64,
     pub interval_ms: u32,
     pub mask_white_ratio: f32,
@@ -94,4 +94,41 @@ pub fn wasm_deserialize_packet(bytes: &[u8]) -> Result<WasmDecodedPacket, JsValu
         codec_internal: header.codec,
         body_internal: body.to_vec(),
     })
+}
+
+// JSに渡したいデータ構造を定義
+#[derive(Serialize)] // これで自動的にJSオブジェクトに変換可能になる
+pub struct DecodedResult {
+    pub project_id: String,
+    pub device_id: String,
+    pub time: i64,
+    pub interval_ms: u32,
+    pub mask_white_ratio: f32,
+    pub state_flag: u16,
+    pub mask_index: u8,
+    pub codec: String, // 文字列として返すと扱いやすい
+    pub body: Vec<u8>,  // Uint8Arrayになる
+}
+
+#[wasm_bindgen]
+pub fn wasm_deserialize_to_json(bytes: &[u8]) -> Result<JsValue, JsValue> {
+    // 既存のRustロジックでデシリアライズ
+    let (header, body) = PacketProtocol::deserialize(bytes)
+        .map_err(|e| JsValue::from_str(e))?;
+
+    // 各フィールドの変換
+    let result = DecodedResult {
+        project_id: Uuid::from_bytes(header.project_id).to_string(),
+        device_id: Uuid::from_bytes(header.device_id).to_string(),
+        time: header.time,
+        interval_ms: header.interval_ms,
+        mask_white_ratio: header.mask_white_ratio,
+        state_flag: header.state.0,
+        mask_index: header.mask_index,
+        codec: String::from_utf8_lossy(&header.codec).to_string(),
+        body: body.to_vec(),
+    };
+
+    // serde-wasm-bindgen で Rust の構造体を直接 JS オブジェクトに変換
+    Ok(serde_wasm_bindgen::to_value(&result)?)
 }
