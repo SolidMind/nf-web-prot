@@ -25,6 +25,7 @@ SOFTWARE.
 pub mod deserialize;
 pub mod message;
 pub mod serialize;
+pub mod wasm;
 
 pub const CURRENT_PROTOCOL_VERSION: u8 = 0;
 //TODO: MessageHeaderのフィールドを減らす。フィールドをbodyへ

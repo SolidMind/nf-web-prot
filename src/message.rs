@@ -42,6 +42,7 @@ pub enum PacketType {
 pub struct MessageHeader {
     // 16バイト境界 (Offset 0)
     pub project_id: u128, // 16 bytes
+    pub device_id: u128,        // 16 bytes
 
     // 8バイト境界 (Offset 16)
     pub time: i64, // 8 bytes
@@ -49,7 +50,6 @@ pub struct MessageHeader {
     // 4バイト境界 (Offset 24)
     pub interval_ms: u32,      // 4 bytes //TODO bodyへ
     pub mask_white_ratio: f32, // 4 bytes //TODO bodyへ
-    pub device_id: u32,        // 4 bytes
     pub codec: [u8; 4],        // 4 bytes
     pub body_size: u32,        // 4 bytes
 
@@ -59,13 +59,13 @@ pub struct MessageHeader {
     pub mask_index: u8,     // 1 byte //TODO bodyへ
 
     // パディング (Offset 48)
-    pub _reserved: [u8; 0], // 0 bytes
+    pub _reserved: [u8; 4], // 0 bytes
 }
 
 impl MessageHeader {
     pub fn new(
         project_id: u128,
-        device_id: u32,
+        device_id: u128,
         time: i64,
         state: StatusFlags,
         mask_index: u8,
@@ -85,7 +85,7 @@ impl MessageHeader {
             codec: codec,
             mask_index: mask_index,
             body_size: body_size,
-            _reserved: [0; 0],
+            _reserved: [0; 4],
         };
     }
 }
