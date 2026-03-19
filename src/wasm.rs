@@ -1,8 +1,8 @@
 // src/lib.rs
-use wasm_bindgen::prelude::*;
-use uuid::Uuid;
 use crate::message::{MessageHeader, PacketProtocol, StatusFlags};
 use serde::Serialize;
+use uuid::Uuid;
+use wasm_bindgen::prelude::*;
 // --- シリアライズ ---
 #[wasm_bindgen]
 pub fn wasm_serialize_packet(
@@ -10,19 +10,32 @@ pub fn wasm_serialize_packet(
     device_id_str: &str,
     time: i64,
     interval_ms: u32,
-    mask_white_ratio: f32,
+    mask_white_ratio_array: &[f32],
     codec_array: &[u8],
     body_size: u32,
     state_flag: u16,
-    mask_index: u8,
+    mask_index_array: &[u8],
     body: &[u8],
 ) -> Result<Vec<u8>, JsValue> {
     if codec_array.len() != 4 {
         return Err(JsValue::from_str("Codec must be exactly 4 bytes"));
     }
+    if mask_white_ratio_array.len() != 8 {
+        return Err(JsValue::from_str(
+            "mask_white_ratio must be exactly 32 bytes",
+        ));
+    }
+    if mask_index_array.len() != 8 {
+        return Err(JsValue::from_str(
+            "mask_white_ratio must be exactly 8 bytes",
+        ));
+    }
     let mut codec = [0u8; 4];
     codec.copy_from_slice(&codec_array[0..4]);
-
+    let mut mask_white_ratio = [0f32; 8];
+    mask_white_ratio.copy_from_slice(&mask_white_ratio_array[0..8]);
+    let mut mask_index = [0u8; 8];
+    mask_index.copy_from_slice(&mask_index_array[0..8]);
     // Project ID のパース
     let project_uuid = Uuid::parse_str(project_id_str)
         .map_err(|e| JsValue::from_str(&format!("Invalid Project UUID: {}", e)))?;
@@ -53,9 +66,9 @@ pub struct WasmDecodedPacket {
     pub device_id: String,
     pub time: i64,
     pub interval_ms: u32,
-    pub mask_white_ratio: f32,
+    mask_white_ratio: [f32; 8],
     pub state_flag: u16,
-    pub mask_index: u8,
+    mask_index: [u8; 8],
     pub body_size: u32,
     codec_internal: [u8; 4],
     body_internal: Vec<u8>,
@@ -68,6 +81,14 @@ impl WasmDecodedPacket {
         self.codec_internal.to_vec()
     }
     #[wasm_bindgen(getter)]
+    pub fn mask_white_ratio(&self) -> Vec<f32> {
+        self.mask_white_ratio.to_vec()
+    }
+    #[wasm_bindgen(getter)]
+    pub fn mask_index(&self) -> Vec<u8> {
+        self.mask_index.to_vec()
+    }
+    #[wasm_bindgen(getter)]
     pub fn body(&self) -> Vec<u8> {
         self.body_internal.clone()
     }
@@ -75,8 +96,7 @@ impl WasmDecodedPacket {
 
 #[wasm_bindgen]
 pub fn wasm_deserialize_packet(bytes: &[u8]) -> Result<WasmDecodedPacket, JsValue> {
-    let (header, body) = PacketProtocol::deserialize(bytes)
-        .map_err(|e| JsValue::from_str(e))?;
+    let (header, body) = PacketProtocol::deserialize(bytes).map_err(|e| JsValue::from_str(e))?;
 
     // 16バイトの配列からUUID文字列を復元
     let project_uuid_str = Uuid::from_bytes(header.project_id).to_string();
@@ -103,18 +123,17 @@ pub struct DecodedResult {
     pub device_id: String,
     pub time: i64,
     pub interval_ms: u32,
-    pub mask_white_ratio: f32,
+    pub mask_white_ratio: [f32; 8],
     pub state_flag: u16,
-    pub mask_index: u8,
+    pub mask_index: [u8; 8],
     pub codec: String, // 文字列として返すと扱いやすい
-    pub body: Vec<u8>,  // Uint8Arrayになる
+    pub body: Vec<u8>, // Uint8Arrayになる
 }
 
 #[wasm_bindgen]
 pub fn wasm_deserialize_to_json(bytes: &[u8]) -> Result<JsValue, JsValue> {
     // 既存のRustロジックでデシリアライズ
-    let (header, body) = PacketProtocol::deserialize(bytes)
-        .map_err(|e| JsValue::from_str(e))?;
+    let (header, body) = PacketProtocol::deserialize(bytes).map_err(|e| JsValue::from_str(e))?;
 
     // 各フィールドの変換
     let result = DecodedResult {

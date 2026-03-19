@@ -40,18 +40,19 @@ pub enum PacketType {
 #[derive(Debug, FromBytes, IntoBytes, PartialEq, Immutable, KnownLayout)]
 #[repr(C)]
 pub struct MessageHeader {
+    pub version: u8, // 1 byte  (Offset 58)
+    pub _reserved1: [u8; 1],
     pub project_id: [u8; 16], // 16 bytes (Offset 0)
     pub device_id: [u8; 16],  // 16 bytes (Offset 16) <- u32から変更
 
-    pub time: i64,             // 8 bytes (Offset 32)
-    pub interval_ms: u32,      // 4 bytes (Offset 40)
-    pub mask_white_ratio: f32, // 4 bytes (Offset 44)
-    pub codec: [u8; 4],        // 4 bytes (Offset 48)
-    pub body_size: u32,        // 4 bytes (Offset 52)
-    pub state: StatusFlags,    // 2 bytes (Offset 56)
-    pub version: u8,           // 1 byte  (Offset 58)
-    pub mask_index: u8,        // 1 byte  (Offset 59)
-    pub _reserved: [u8; 4],    // 4 bytes (Offset 60) <- アラインメント調整のために4バイトに変更推奨
+    pub state: StatusFlags,         // 2 bytes (Offset 56)
+    pub mask_index: [u8; 8],        // 1 byte  (Offset 59)
+    pub mask_white_ratio: [f32; 8], // 4 bytes (Offset 44)
+    pub interval_ms: u32,           // 4 bytes (Offset 40)
+
+    pub codec: [u8; 4], // 4 bytes (Offset 48)
+    pub body_size: u32, // 4 bytes (Offset 52)
+    pub time: i64,      // 8 bytes (Offset 32)
 }
 
 impl MessageHeader {
@@ -60,8 +61,8 @@ impl MessageHeader {
         device_id: [u8; 16], // <- u32から変更
         time: i64,
         state: StatusFlags,
-        mask_index: u8,
-        mask_white_ratio: f32,
+        mask_index: [u8; 8],
+        mask_white_ratio: [f32; 8],
         interval_ms: u32,
         codec: [u8; 4],
         body_size: u32,
@@ -77,7 +78,7 @@ impl MessageHeader {
             codec,
             mask_index,
             body_size,
-            _reserved: [0; 4],
+            _reserved1: [0; 1],
         }
     }
 }
