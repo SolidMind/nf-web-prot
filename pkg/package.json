@@ -8,11 +8,13 @@
   "files": [
     "nf_web_prot_bg.wasm",
     "nf_web_prot.js",
+    "nf_web_prot_bg.js",
     "nf_web_prot.d.ts"
   ],
   "main": "nf_web_prot.js",
   "types": "nf_web_prot.d.ts",
   "sideEffects": [
+    "./nf_web_prot.js",
     "./snippets/*"
   ]
 }

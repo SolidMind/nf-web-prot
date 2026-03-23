@@ -151,3 +151,29 @@ pub fn wasm_deserialize_to_json(bytes: &[u8]) -> Result<JsValue, JsValue> {
     // serde-wasm-bindgen で Rust の構造体を直接 JS オブジェクトに変換
     Ok(serde_wasm_bindgen::to_value(&result)?)
 }
+
+#[wasm_bindgen]
+pub fn wasm_deserialize_header_to_json(bytes: &[u8]) -> Result<JsValue, JsValue> {
+    let header_len = std::mem::size_of::<MessageHeader>();
+    if bytes.len() < header_len {
+        return Err(JsValue::from_str("Received data is too short to contain a header"));
+    }
+
+    let (header_bytes, _) = bytes.split_at(header_len);
+    let header_ref = zerocopy::Ref::<_, MessageHeader>::from_bytes(header_bytes).unwrap();
+    let header = zerocopy::Ref::<&[u8], MessageHeader>::into_ref(header_ref);
+
+    let result = DecodedResult {
+        project_id: Uuid::from_bytes(header.project_id).to_string(),
+        device_id: Uuid::from_bytes(header.device_id).to_string(),
+        time: header.time,
+        interval_ms: header.interval_ms,
+        mask_white_ratio: header.mask_white_ratio,
+        state_flag: header.state.0,
+        mask_index: header.mask_index,
+        codec: String::from_utf8_lossy(&header.codec).to_string(),
+        body: vec![],
+    };
+
+    Ok(serde_wasm_bindgen::to_value(&result)?)
+}
