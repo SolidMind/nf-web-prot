@@ -1,164 +1,178 @@
-/*
-MIT License
+use std::fmt::Debug;
+use std::mem::size_of;
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout, TryFromBytes};
 
-Copyright (c) 2025 yatoneco
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
-use core::ops::{BitAnd, BitOr};
-use std::fmt::{self, Debug};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
-pub struct PacketProtocol;
+static VERSION: u8 = 2u8;
 
 #[repr(u8)]
-pub enum PacketType {
-    Request,
-    Response,
-    Notification,
+#[derive(
+    Debug, Default, PartialEq, Immutable, IntoBytes, TryFromBytes, KnownLayout, Clone, Copy,
+)]
+pub enum BodyType {
+    #[default]
+    Empty = 0,
+    Test = 1,
+    Sensor = 2,
+    Media = 3,
+    Move = 4,
+    Silence = 5,
+    Dynamic = u8::MAX,
 }
 
-/// StatusFlagsのorはCatchMoveとSilenceにTranseEdge、TranseDiff、TranseCon、OrderPass、OrderErrorの何れかが可能。
-/// TODO: ロジックとしてorを制限する。
-/// TODO CPUに優しくするために4バイトや8バイト区切りでアクセスに対応。
-///　TODO codecのfmt
-#[derive(Debug, FromBytes, IntoBytes, PartialEq, Immutable, KnownLayout)]
+#[derive(Debug, TryFromBytes, IntoBytes, PartialEq, Immutable, KnownLayout, Clone)]
 #[repr(C)]
 pub struct MessageHeader {
-    pub version: u8, // 1 byte  (Offset 58)
-    pub _reserved1: [u8; 1],
     pub project_id: [u8; 16], // 16 bytes (Offset 0)
-    pub device_id: [u8; 16],  // 16 bytes (Offset 16) <- u32から変更
-
-    pub state: StatusFlags,         // 2 bytes (Offset 56)
-    pub mask_index: [u8; 8],        // 1 byte  (Offset 59)
-    pub mask_white_ratio: [f32; 8], // 4 bytes (Offset 44)
-    pub interval_ms: u32,           // 4 bytes (Offset 40)
-
-    pub codec: [u8; 4], // 4 bytes (Offset 48)
-    pub body_size: u32, // 4 bytes (Offset 52)
-    pub time: i64,      // 8 bytes (Offset 32)
+    pub device_id: [u8; 16],  // 16 bytes (Offset 16)
+    pub r#type: BodyType,     // 2 bytes (Offset 32)
+    pub version: u8,          // 1 bytes (Offset 33)
+    pub _padding: [u8; 6],    // 6 bytes (Offset 34)
+    pub time: i64,            // 8 bytes (Offset 40)
 }
 
-impl MessageHeader {
-    pub fn new(
+// ==========================================
+// 実際のボディ構造体の定義
+// ==========================================
+
+// トレイトはマーカーとして残しておいても良いですが、
+// ジェネリクスを使わないため必須ではありません。
+pub trait MessageBody: FromBytes + IntoBytes + Immutable + KnownLayout + Debug + Clone {}
+
+#[derive(Debug, FromBytes, IntoBytes, PartialEq, Immutable, KnownLayout, Clone)]
+#[repr(C)]
+pub struct EmptyBody {}
+impl MessageBody for EmptyBody {}
+
+#[derive(Debug, FromBytes, IntoBytes, PartialEq, Immutable, KnownLayout, Clone)]
+#[repr(C)]
+pub struct SensorDataBody {
+    pub temperature: f32,
+    pub humidity: f32,
+}
+impl MessageBody for SensorDataBody {}
+
+#[derive(Debug, FromBytes, IntoBytes, PartialEq, Immutable, KnownLayout, Clone)]
+#[repr(C)]
+pub struct MediaDataMeta {
+    pub codec: [u8; 4],
+    pub data_length: u32,
+}
+impl MessageBody for MediaDataMeta {}
+
+#[derive(Debug, FromBytes, IntoBytes, PartialEq, Immutable, KnownLayout, Clone)]
+#[repr(C)]
+pub struct MessageDataBody {
+    pub mask_index: [u8; 8],
+    pub mask_white_ratio: [f32; 8],
+    pub interval_ms: u32,
+}
+impl MessageBody for MessageDataBody {}
+
+/// 受信したパケットをいったん保持するための共通構造体。
+/// ジェネリクスを持たないため、配列(Vec)にまとめたり、キューに入れたりしやすくなる。
+#[derive(Debug, Clone)]
+pub struct RawMessage {
+    pub header: MessageHeader,
+    pub raw_body: Vec<u8>, // ボディは型にはめず、生のバイト列として保持
+}
+
+impl RawMessage {
+    /// 1. 送信用のコンストラクタ（Sensor用）
+    pub fn new_sensor(
         project_id: [u8; 16],
-        device_id: [u8; 16], // <- u32から変更
+        device_id: [u8; 16],
+        body: SensorDataBody,
         time: i64,
-        state: StatusFlags,
-        mask_index: [u8; 8],
-        mask_white_ratio: [f32; 8],
-        interval_ms: u32,
-        codec: [u8; 4],
-        body_size: u32,
     ) -> Self {
         Self {
-            version: crate::CURRENT_PROTOCOL_VERSION,
-            project_id,
-            device_id,
-            time,
-            state,
-            interval_ms,
-            mask_white_ratio,
-            codec,
-            mask_index,
-            body_size,
-            _reserved1: [0; 1],
+            header: MessageHeader {
+                project_id,
+                device_id,
+                r#type: BodyType::Sensor,
+                version: VERSION,
+                _padding: [0; 6],
+                time,
+            },
+            raw_body: body.as_bytes().to_vec(),
         }
     }
-}
-#[repr(transparent)]
-#[derive(Clone, Copy, PartialEq, Eq, FromBytes, IntoBytes, Immutable)]
-pub struct StatusFlags(pub u16);
 
-impl StatusFlags {
-    pub const CATCH_MOVE: Self = Self(1 << 0);
-    pub const SILENCE: Self = Self(1 << 1);
-    pub const REST_SENSING: Self = Self(1 << 2);
-    pub const AWAKE_SENSING: Self = Self(1 << 3);
-    pub const START_DEVICE: Self = Self(1 << 4);
-    pub const REST_PUSH: Self = Self(1 << 5);
+    /// 2. 送信用のコンストラクタ（Media用: 固定長メタデータ + 可変長データ）
+    pub fn new_media(
+        project_id: [u8; 16],
+        device_id: [u8; 16],
+        meta: MediaDataMeta,
+        mut data: Vec<u8>,
+        time: i64,
+    ) -> Self {
+        let mut raw_body = meta.as_bytes().to_vec();
+        raw_body.append(&mut data); // メタデータの後ろに可変長データを結合
 
-    pub const ORDER_PASS: Self = Self(1 << 6);
-    pub const ORDER_ERROR: Self = Self(1 << 7);
-    pub const TRANSE_EDGE: Self = Self(1 << 8);
-    pub const TRANSE_DIFF: Self = Self(1 << 9);
-    pub const TRANSE_CON: Self = Self(1 << 10);
-    pub const TRY_RESTART: Self = Self(1 << 11);
-
-    pub const UNWORK_CAMERA: Self = Self(1 << 12);
-    pub const DISCONNECT: Self = Self(1 << 13);
-    pub const CONNECT: Self = Self(1 << 14);
-}
-impl BitOr for StatusFlags {
-    type Output = Self;
-
-    fn bitor(self, rhs: Self) -> Self::Output {
-        StatusFlags(self.0 | rhs.0)
-    }
-}
-
-impl BitAnd for StatusFlags {
-    type Output = Self;
-
-    fn bitand(self, rhs: Self) -> Self::Output {
-        StatusFlags(self.0 & rhs.0)
-    }
-}
-
-impl fmt::Debug for StatusFlags {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let flags = [
-            (Self::CATCH_MOVE, "CATCH_MOVE"),
-            (Self::SILENCE, "SILENCE"),
-            (Self::REST_SENSING, "REST_SENSING"),
-            (Self::AWAKE_SENSING, "AWAKE_SENSING"),
-            (Self::START_DEVICE, "START_DEVICE"),
-            (Self::REST_PUSH, "REST_PUSH"),
-            (Self::ORDER_PASS, "ORDER_PASS"),
-            (Self::ORDER_ERROR, "ORDER_ERROR"),
-            (Self::TRANSE_EDGE, "TRANSE_EDGE"),
-            (Self::TRANSE_DIFF, "TRANSE_DIFF"),
-            (Self::TRANSE_CON, "TRANSE_CON"),
-            (Self::TRY_RESTART, "TRY_RESTART"),
-            (Self::UNWORK_CAMERA, "UNWORK_CAMERA"),
-        ];
-
-        let active_flags: Vec<&str> = flags
-            .iter()
-            .filter(|(flag, _)| (self.0 & flag.0) != 0)
-            .map(|(_, name)| *name)
-            .collect();
-
-        if !active_flags.is_empty() {
-            let known_mask = flags.iter().fold(0, |acc, (flag, _)| acc | flag.0);
-            let remaining = self.0 & !known_mask;
-
-            let flags_str = active_flags.join(" | ");
-
-            if remaining != 0 {
-                write!(f, "StatusFlags({} | {:#x})", flags_str, remaining)
-            } else {
-                write!(f, "StatusFlags({})", flags_str)
-            }
-        } else {
-            // フラグが何も立っていない、または未知の数値のみの場合
-            write!(f, "StatusFlags({:#x})", self.0)
+        Self {
+            header: MessageHeader {
+                project_id,
+                device_id,
+                r#type: BodyType::Media,
+                version: VERSION,
+                _padding: [0; 6],
+                time,
+            },
+            raw_body,
         }
+    }
+
+    /// バイト列から RawMessage を生成する（デシリアライズ / 受信時）
+    pub fn parse(bytes: &[u8]) -> Result<Self, &'static str> {
+        let header_size = size_of::<MessageHeader>();
+        if bytes.len() < header_size {
+            return Err("Packet too small to contain header");
+        }
+
+        // ヘッダーのみ先にパース
+        let header = MessageHeader::try_read_from_bytes(&bytes[..header_size])
+            .map_err(|_| "Failed to parse header")?;
+
+        Ok(Self {
+            header,
+            raw_body: bytes[header_size..].to_vec(), // 残りをすべてボディとして保存
+        })
+    }
+
+    /// RawMessage をバイト列に変換する（シリアライズ / 送信時）
+    pub fn serialize(&self) -> Vec<u8> {
+        let mut buffer = Vec::with_capacity(size_of::<MessageHeader>() + self.raw_body.len());
+        buffer.extend_from_slice(self.header.as_bytes());
+        buffer.extend_from_slice(&self.raw_body);
+        buffer
+    }
+
+    //
+    // 以下、必要な時に生データから各構造体へキャストする抽出メソッド
+    //
+
+    /// Sensorデータとして解釈を試みる
+    pub fn extract_sensor_body(&self) -> Option<SensorDataBody> {
+        if self.header.r#type != BodyType::Sensor {
+            return None;
+        }
+        // FromBytesが実装されているので、サイズが合えば安全に読み取れる
+        SensorDataBody::read_from_bytes(self.raw_body.as_slice()).ok()
+    }
+
+    /// Mediaデータとして解釈を試みる（メタデータと、可変長データのスライスを返す）
+    pub fn extract_media_data(&self) -> Option<(MediaDataMeta, &[u8])> {
+        if self.header.r#type != BodyType::Media {
+            return None;
+        }
+
+        let meta_size = size_of::<MediaDataMeta>();
+        if self.raw_body.len() < meta_size {
+            return None; // データが足りない
+        }
+
+        let meta = MediaDataMeta::read_from_bytes(&self.raw_body[..meta_size]).ok()?;
+        let data = &self.raw_body[meta_size..]; // メタデータ以降のスライス
+
+        Some((meta, data))
     }
 }
