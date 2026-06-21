@@ -85,6 +85,25 @@ impl RawMessage {
         buffer
     }
 
+    pub fn new(
+        project_id: [u8; 16],
+        device_id: [u8; 16],
+        time: i64,
+        body_type: BodyType,
+    ) -> RawMessage {
+        Self {
+            header: MessageHeader {
+                project_id,
+                device_id,
+                r#type: body_type,
+                version: VERSION,
+                _padding: [0; 6],
+                time,
+            },
+            raw_body: Vec::new(),
+        }
+    }
+
     pub fn new_msg(
         project_id: [u8; 16],
         device_id: [u8; 16],
@@ -104,12 +123,11 @@ impl RawMessage {
             raw_body: body.as_bytes().to_vec(),
         }
     }
-   pub fn extract_message_body(&self) -> Option<MessageDataBody> {
+    pub fn extract_message_body(&self) -> Option<MessageDataBody> {
         if self.header.r#type != BodyType::Move || self.header.r#type != BodyType::Silence {
             return None;
         }
         // FromBytesが実装されているので、サイズが合えば安全に読み取れる
         MessageDataBody::read_from_bytes(self.raw_body.as_slice()).ok()
     }
-    
 }
