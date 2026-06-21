@@ -16,6 +16,8 @@ pub enum BodyType {
     Media = 3,
     Move = 4,
     Silence = 5,
+    Connect = 6,
+    Disconnect = 7,
     Dynamic = u8::MAX,
 }
 
