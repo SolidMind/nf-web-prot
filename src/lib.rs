@@ -1,4 +1,3 @@
-#![feature(trivial_bounds)]
 /*
 MIT License
 
