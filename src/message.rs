@@ -30,12 +30,12 @@ pub struct MessageHeader {
     pub time: i64,            // 8 bytes (Offset 40)
 }
 
-// ==========================================
+//
 // 実際のボディ構造体の定義
-// ==========================================
+//
 
-// トレイトはマーカーとして残しておいても良いですが、
-// ジェネリクスを使わないため必須ではありません。
+// トレイトはマーカーとして残している。
+// ジェネリクスを使わないため必須ない。
 pub trait MessageBody: FromBytes + IntoBytes + Immutable + KnownLayout + Debug + Clone {}
 
 #[derive(Debug, FromBytes, IntoBytes, PartialEq, Immutable, KnownLayout, Clone)]
