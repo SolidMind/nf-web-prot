@@ -1,6 +1,6 @@
-use crate::message::{
-    BodyType, MediaDataMeta, MessageDataBody, MessageHeader, RawMessage, SensorDataBody,
-};
+use crate::{media::MediaDataMeta, message::{
+    BodyType, MessageDataBody, MessageHeader, RawMessage
+}, senser::SensorDataBody};
 use serde::Serialize;
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;

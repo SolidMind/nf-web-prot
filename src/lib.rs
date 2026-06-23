@@ -1,4 +1,3 @@
-#![feature(trivial_bounds)]
 /*
 MIT License
 
@@ -22,6 +21,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+pub static VERSION: u8 = 2u8;
 
+pub mod senser;
+pub mod media;
 pub mod message;
 pub mod wasm;
